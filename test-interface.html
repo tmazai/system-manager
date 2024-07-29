@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Manager Test Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        input, button { margin: 5px 0; padding: 5px; }
+        #updates { border: 1px solid #ccc; padding: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>System Manager Test Interface</h1>
+
+    <h2>Authentication</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+
+    <h2>Projects</h2>
+    <input type="text" id="projectName" placeholder="Project Name">
+    <input type="text" id="projectDescription" placeholder="Project Description">
+    <button onclick="createProject()">Create Project</button>
+    <button onclick="getProjects()">Get All Projects</button>
+
+    <h2>Tasks</h2>
+    <input type="text" id="projectId" placeholder="Project ID">
+    <input type="text" id="taskTitle" placeholder="Task Title">
+    <input type="text" id="taskDescription" placeholder="Task Description">
+    <button onclick="createTask()">Create Task</button>
+    <button onclick="getProjectTasks()">Get Project Tasks</button>
+
+    <h2>Real-time Updates</h2>
+    <div id="updates"></div>
+
+    <script>
+        let token = '';
+        const baseUrl = 'http://localhost:5001/api';
+        const socket = io('http://localhost:5001');
+
+        socket.on('projectUpdate', (data) => {
+            addUpdate(`Project ${data.action}: ${JSON.stringify(data.project || data.projectId)}`);
+        });
+
+        socket.on('taskUpdate', (data) => {
+            addUpdate(`Task ${data.action}: ${JSON.stringify(data.task || data.taskId)}`);
+        });
+
+        function addUpdate(message) {
+            const updatesDiv = document.getElementById('updates');
+            const updateElement = document.createElement('p');
+            updateElement.textContent = message;
+            updatesDiv.appendChild(updateElement);
+        }
+
+        async function register() {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await response.json();
+                alert(JSON.stringify(data));
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                token = data.token;
+                alert('Login successful. Token: ' + token);
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        }
+
+        async function createProject() {
+            const name = document.getElementById('projectName').value;
+            const description = document.getElementById('projectDescription').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/projects/add`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, description })
+                });
+                const data = await response.json();
+                alert(JSON.stringify(data));
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        }
+
+        async function getProjects() {
+            try {
+                const response = await fetch(`${baseUrl}/projects`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                alert(JSON.stringify(data));
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        }
+
+        async function createTask() {
+            const projectId = document.getElementById('projectId').value;
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/projects/${projectId}/tasks`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, description })
+                });
+                const data = await response.json();
+                alert(JSON.stringify(data));
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        }
+
+        async function getProjectTasks() {
+            const projectId = document.getElementById('projectId').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/projects/${projectId}/tasks`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                alert(JSON.stringify(data));
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Manager Real-time Updates</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <h1>System Manager Real-time Updates</h1>
+    <div id="updates"></div>
+
+    <script>
+        const socket = io('http://localhost:5000');
+        const updatesDiv = document.getElementById('updates');
+
+        socket.on('projectUpdate', (data) => {
+            const updateElement = document.createElement('p');
+            updateElement.textContent = `Project ${data.action}: ${JSON.stringify(data.project || data.projectId)}`;
+            updatesDiv.appendChild(updateElement);
+        });
+
+        socket.on('taskUpdate', (data) => {
+            const updateElement = document.createElement('p');
+            updateElement.textContent = `Task ${data.action}: ${JSON.stringify(data.task || data.taskId)}`;
+            updatesDiv.appendChild(updateElement);
+        });
+    </script>
+</body>
+</html>
